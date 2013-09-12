@@ -12,5 +12,5 @@ set :session_secret, ENV["SESSION_KEY"] || 'too secret'
 enable :sessions
 
 get '/' do
-  "hoi"
+  erb :index
 end
