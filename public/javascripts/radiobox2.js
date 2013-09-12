@@ -6,9 +6,24 @@ Radiobox2.init = function() {
   $('#radios select').change(function (what) {
     console.log('something selected!' + $('#radiobox2-form-channel').val());
     Radiobox2.update_radio_info();
-    Radiobox2.get_current_broadcast_for_channel();
+    Radiobox2.get_current_broadcast_for_channel(Radiobox2.get_current_channel());
   });
+  
+  setInterval(function() {
+      Radiobox2.time_lapsed();
+  }, 10000);
 };
+
+Radiobox2.get_current_channel = function() {
+  var radioId = parseInt($('#radiobox2-form-channel').val());
+  return radioId;
+};
+
+Radiobox2.time_lapsed = function() {
+    console.log('time lapsed !');
+    var channelId = Radiobox2.get_current_channel();
+    Radiobox2.get_current_broadcast_for_channel(channelId);
+}
 
 Radiobox2.update_radio_info = function() {
   var radioId = parseInt($('#radiobox2-form-channel').val());
@@ -22,7 +37,7 @@ Radiobox2.update_radio_info = function() {
 
 Radiobox2.get_current_broadcast_for_channel = function(channelId) {
   $.get(
-    "http://radiobox2.omroep.nl/broadcast/search.json?q=channel.id:'6'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
+    "http://radiobox2.omroep.nl/broadcast/search.json?q=channel.id:'" + channelId + "'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
     function(data) {
       console.dir(data);
       var broadcast = data.results[0];
