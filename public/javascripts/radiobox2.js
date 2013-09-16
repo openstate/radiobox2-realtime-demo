@@ -23,6 +23,8 @@ Radiobox2.time_lapsed = function() {
     console.log('time lapsed !');
     var channelId = Radiobox2.get_current_channel();
     Radiobox2.get_current_broadcast_for_channel(channelId);
+    Radiobox2.get_current_item_for_channel(channelId);
+    Radiobox2.get_current_track_for_channel(channelId);
 }
 
 Radiobox2.update_radio_info = function() {
@@ -42,8 +44,50 @@ Radiobox2.get_current_broadcast_for_channel = function(channelId) {
       console.dir(data);
       var broadcast = data.results[0];
       $('#programme img').attr('src', broadcast.image.url);
-      $('#programme h1').text(broadcast.name);
-      $('#programme #programme-description').html(broadcast.description);
+      $('#programme-info h2').text(broadcast.name);
+      $('#programme-info #programme-description').html(broadcast.description);
+      $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
+      $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
+
+      //$('#presenter img').attr('src', broadcast.image.url);
+      $('#presenter h2').text(broadcast.presenter[0].full_name);
+      $('#presenter #presenter-description').html(broadcast.presenter[0].biography);
+
+    }
+  , 'json');
+};
+
+Radiobox2.get_current_item_for_channel = function(channelId) {
+  $.get(
+    "http://radiobox2.omroep.nl/item/search.json?q=channel.id:'" + channelId + "'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
+    function(data) {
+      console.log('item:');
+      console.dir(data);
+      var item = data.results[0];
+    }
+  , 'json');
+};
+
+Radiobox2.get_current_track_for_channel = function(channelId) {
+  $.get(
+    '/channels/' + channelId + '/current_track',
+    function(data) {
+      console.log('track:');
+      console.dir(data);
+      if (data.results.length > 0) {
+        var item = data.results[0];
+        $('#track h1 .glyphicon').removeClass('glyphicon-stop').addClass('glyphicon-play');
+        $('#track h1 .artist').text(item.songfile.artist);
+        $('#track h1 .title').text(item.songfile.title);
+        $('#track .start').text(moment(item.startdatetime).fromNow());
+        $('#track .end').text(moment(item.stopdatetime).fromNow());
+      } else {
+        $('#track h1 .glyphicon').removeClass('glyphicon-play').addClass('glyphicon-stop');
+        $('#track h1 .artist').text('');
+        $('#track h1 .title').text('');
+        $('#track .start').text('');
+        $('#track .end').text('');
+      }
     }
   , 'json');
 };
