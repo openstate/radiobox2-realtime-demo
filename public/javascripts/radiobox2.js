@@ -44,7 +44,7 @@ Radiobox2.get_current_broadcast_for_channel = function(channelId) {
       console.dir(data);
       var broadcast = data.results[0];
       $('#programme img').attr('src', broadcast.image.url);
-      $('#programme-info h2').text(broadcast.name);
+      $('#programme-info h2 .title').text(broadcast.name);
       $('#programme-info #programme-description').html(broadcast.description);
       $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
       $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
@@ -81,15 +81,49 @@ Radiobox2.get_current_track_for_channel = function(channelId) {
         $('#track h1 .title').text(item.songfile.title);
         $('#track .start').text(moment(item.startdatetime).fromNow());
         $('#track .end').text(moment(item.stopdatetime).fromNow());
+        Radiobox2.get_current_songfile(item);
       } else {
         $('#track h1 .glyphicon').removeClass('glyphicon-play').addClass('glyphicon-stop');
         $('#track h1 .artist').text('');
         $('#track h1 .title').text('');
         $('#track .start').text('');
         $('#track .end').text('');
+        $('.track .player').html('');
+        $('#track .player').attr('data-youtube-id', '');
       }
     }
   , 'json');
+};
+
+Radiobox2.get_current_songfile = function(track) {
+  console.log('track for songfile');
+  console.dir(track);
+  $.get(
+    "http://radiobox2.omroep.nl/songversion/search.json?q=songfile.id:'" + track.songfile.id + "'",
+    function (data) {
+      if (data.results.length > 0) {
+        console.log('got songfile!');
+        var songfile = data.results[0];
+        console.dir(songfile);
+        if ((songfile.youtube_id != '') && ($('#track .player').attr('data-youtube-id') == '')) {
+          $.get('/youtube/embed/' + songfile.youtube_id,
+            function(data){
+              console.log('got youtube data!');
+              console.dir(data);
+              $('#track .player').attr('data-youtube-id', songfile.youtube_id);
+              $('#track .player').html(data.html);
+            }
+          , 'json');
+        } else if ((typeof(songfile.audiofile) !== 'undefined') && (songfile.audiofile.url != '') ){
+          // what now?
+        }
+      } else {
+        console.log('got no songfile!');
+        $('.track .player').html('');
+        $('#track .player').attr('data-youtube-id', '');
+      }
+    }
+  , 'json');  
 };
 
 Radiobox2.get_channels = function() {
