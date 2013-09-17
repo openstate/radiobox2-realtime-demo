@@ -1,3 +1,44 @@
+var Radiobox2Api = window.Radiobox2Api || {
+  data: {
+    currentChannelId: 3,
+    currentBroadcast: undefined,
+    currentTrack: undefined,
+    _gettingBroadcastInfo: false, // avoid doing the same request twice and stuff
+  },
+};
+
+Radiobox2Api.getChannelId = function() {
+  return Radiobox2Api.data.currentChannelId;
+};
+
+Radiobox2Api.setChannelId = function(channelId) {
+  Radiobox2Api.data.currentChannelId = channelId;
+  // some more stuff needs to happen.. clearing broadcast en track
+  $(document).trigger('Radiobox2.channelChanged', [channelId]);
+};
+
+Radiobox2Api.getCurrentBroadcast = function() {
+  if (Radiobox2Api.data._gettingBroadcastInfo) {
+    return;
+  }
+  Radiobox2Api.data._gettingBroadcastInfo = true;
+  $.get(
+    "http://radiobox2.omroep.nl/broadcast/search.json?q=channel.id:'" + Radiobox2Api.getChannelId() + "'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
+    function(data) {
+      console.dir(data);
+      var broadcast = data.results[0];
+      Radiobox2Api.data._gettingBroadcastInfo = false;
+      if (typeof(Radiobox2Api.data.currentBroadcast) !== 'undefined') && (broadcast.id == Radiobox2Api.data.currentBroadcast.id) {
+        // do nothing?
+      } else {
+        Radiobox2Api.data.currentBroadcast = broadcast;
+        $(document).trigger('Radiobox2.broadcastChanged', [broadcast]);
+      }
+    }
+  , 'json');
+};
+
+/* Actual app */
 var Radiobox2 = window.Radiobox2 || {
   data: {},
 };
