@@ -8,7 +8,22 @@ var Radiobox2Api = window.Radiobox2Api || {
     _gettingCurrentItems: false,
     currentTrack: undefined,
     _gettingCurrentTrack: false,
+    full_channels: {},
+    channels: {}
   },
+};
+
+Radiobox2.getChannels = function() {
+  $.get('http://radiobox2.omroep.nl/channel/search.json?q=', function(data) {
+    console.dir(data);
+    Radiobox2.data.full_channels = {};
+    Radiobox2.data.channels = {};
+    for (var i in data.results) {
+      Radiobox2.data.full_channels[data.results[i].id] = data.results[i];
+      Radiobox2.data.channels[data.results[i].id] = data.results[i].name;
+    }
+    $(document).trigger('Radiobox2.channelsReceived', [data]);    
+  }, 'json');
 };
 
 Radiobox2Api.getChannelId = function() {
