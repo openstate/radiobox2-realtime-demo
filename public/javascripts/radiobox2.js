@@ -6,6 +6,8 @@ var Radiobox2Api = window.Radiobox2Api || {
     _gettingBroadcastInfo: false, // avoid doing the same request twice and stuff
     currentItems: undefined,
     _gettingCurrentItems: false,
+    currentTrack: undefined,
+    _gettingCurrentTrack: false,
   },
 };
 
@@ -54,6 +56,31 @@ Radiobox2Api.getCurrentItems = function() {
       Radiobox2Api.data.currentItems = data.results;
       // FIXME: should compare before calling change event ...
       $(document).trigger('Radiobox2.itemsChanged', [data.results]);
+    }
+  , 'json');
+};
+
+Radiobox2.getCurrentTrack = function() {
+  if (Radiobox2Api.data._gettingCurrentTrack) {
+    return;
+  }
+  Radiobox2Api.data._gettingCurrentTrack = true;
+  $.get(
+    '/channels/' + Radiobox2Api.getChannelId() + '/current_track',
+    function(data) {
+      console.log('track:');
+      console.dir(data);
+      Radiobox2Api.data._gettingCurrentTrack = false;
+      var track = undefined;
+      if (data.results.length > 0) {
+        track = data.results[0];
+      }
+      
+      var trackChanged = (typeof(track) != typeof(Radiobox2Api.data.currentTrack)) || (track.id != Radiobox2Api.data.currentTrack.id);
+      if (trackChanged) {
+        Radiobox2Api.data.currentTrack = track;
+        $(document).trigger('Radiobox2.trackChanged', [track]);        
+      }
     }
   , 'json');
 };
