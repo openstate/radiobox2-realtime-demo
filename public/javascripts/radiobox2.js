@@ -221,6 +221,21 @@ Radiobox2.get_current_songfile = function(track) {
   , 'json');  
 };
 
+Radiobox2.channelChanged = function() {
+  // FIXME: need to clear the interface here ...
+
+  var radioId = Radiobox2Api.getChannelId();
+  $('#radios select').val(radioId);
+
+  var radioInfo = Radiobox2Api.data.full_channels[radioId];
+  $('#radio-info img').attr('src', radioInfo.image.url);
+  $('#radio-info h1').text(radioInfo.name);
+  $('#radio-info h3').text(radioInfo.epg_shortdescription);
+  $('#radio-info p.description').text(radioInfo.description);
+  $('#radio-info p.tags').text(radioInfo.tags);
+  
+};
+
 Radiobox2.channelsReceived = function() {
   console.log('channels received !');
   for (var i in Radiobox2Api.data.full_channels) {
@@ -229,22 +244,25 @@ Radiobox2.channelsReceived = function() {
       $('<option value="' + Radiobox2Api.data.full_channels[i].id + '">' + Radiobox2Api.data.full_channels[i].name + '</option>'));
     }
   }
-  $('#radios select').val(Radiobox2Api.getChannelId());
+  
+  // FIXME: do an interface update by triggering the event instead
+  Radiobox2Api.setChannelId(Radiobox2Api.getChannelId());
 };
 
 Radiobox2.init = function() {
   $(document).bind('Radiobox2.channelsReceived', function() {
     Radiobox2.channelsReceived();
+  }).bind('Radiobox2.channelChanged', function() {
+    Radiobox2.channelChanged();
   });
   
-  Radiobox2Api.init();
 
-  /*
   $('#radios select').change(function (what) {
-    console.log('something selected!' + $('#radiobox2-form-channel').val());
-    Radiobox2.update_radio_info();
-    Radiobox2.get_current_broadcast_for_channel(Radiobox2.get_current_channel());
-  });*/
+    var channelId = parseInt($('#radiobox2-form-channel').val());
+    Radiobox2Api.setChannelId(channelId);
+  });
+
+  Radiobox2Api.init();
   
   /*
   setInterval(function() {
