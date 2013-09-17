@@ -4,6 +4,8 @@ var Radiobox2Api = window.Radiobox2Api || {
     currentBroadcast: undefined,
     currentTrack: undefined,
     _gettingBroadcastInfo: false, // avoid doing the same request twice and stuff
+    currentItems: undefined,
+    _gettingCurrentItems: false,
   },
 };
 
@@ -34,6 +36,24 @@ Radiobox2Api.getCurrentBroadcast = function() {
         Radiobox2Api.data.currentBroadcast = broadcast;
         $(document).trigger('Radiobox2.broadcastChanged', [broadcast]);
       }
+    }
+  , 'json');
+};
+
+Radiobox2Api.getCurrentItems = function() {
+  if (Radiobox2Api.data._gettingCurrentItems) {
+    return;
+  }
+  Radiobox2Api.data._gettingCurrentItems = true;
+  $.get(
+    "http://radiobox2.omroep.nl/item/search.json?q=channel.id:'" + Radiobox2Api.getChannelId() + "'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
+    function(data) {
+      console.log('item:');
+      console.dir(data);
+      Radiobox2Api.data._gettingCurrentItems = false;
+      Radiobox2Api.data.currentItems = data.results;
+      // FIXME: should compare before calling change event ...
+      $(document).trigger('Radiobox2.itemsChanged', [data.results]);
     }
   , 'json');
 };
