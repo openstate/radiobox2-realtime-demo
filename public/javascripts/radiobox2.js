@@ -13,14 +13,18 @@ var Radiobox2Api = window.Radiobox2Api || {
   },
 };
 
-Radiobox2.getChannels = function() {
+Radiobox2Api.init = function() {
+  Radiobox2Api.getChannels();
+};
+
+Radiobox2Api.getChannels = function() {
   $.get('http://radiobox2.omroep.nl/channel/search.json?q=', function(data) {
     console.dir(data);
-    Radiobox2.data.full_channels = {};
-    Radiobox2.data.channels = {};
+    Radiobox2Api.data.full_channels = {};
+    Radiobox2Api.data.channels = {};
     for (var i in data.results) {
-      Radiobox2.data.full_channels[data.results[i].id] = data.results[i];
-      Radiobox2.data.channels[data.results[i].id] = data.results[i].name;
+      Radiobox2Api.data.full_channels[data.results[i].id] = data.results[i];
+      Radiobox2Api.data.channels[data.results[i].id] = data.results[i].name;
     }
     $(document).trigger('Radiobox2.channelsReceived', [data]);    
   }, 'json');
@@ -47,7 +51,7 @@ Radiobox2Api.getCurrentBroadcast = function() {
       console.dir(data);
       var broadcast = data.results[0];
       Radiobox2Api.data._gettingBroadcastInfo = false;
-      if (typeof(Radiobox2Api.data.currentBroadcast) !== 'undefined') && (broadcast.id == Radiobox2Api.data.currentBroadcast.id) {
+      if ((typeof(Radiobox2Api.data.currentBroadcast) !== 'undefined') && (broadcast.id == Radiobox2Api.data.currentBroadcast.id)) {
         // do nothing?
       } else {
         Radiobox2Api.data.currentBroadcast = broadcast;
@@ -75,7 +79,7 @@ Radiobox2Api.getCurrentItems = function() {
   , 'json');
 };
 
-Radiobox2.getCurrentTrack = function() {
+Radiobox2Api.getCurrentTrack = function() {
   if (Radiobox2Api.data._gettingCurrentTrack) {
     return;
   }
@@ -103,18 +107,6 @@ Radiobox2.getCurrentTrack = function() {
 /* Actual app */
 var Radiobox2 = window.Radiobox2 || {
   data: {},
-};
-
-Radiobox2.init = function() {
-  $('#radios select').change(function (what) {
-    console.log('something selected!' + $('#radiobox2-form-channel').val());
-    Radiobox2.update_radio_info();
-    Radiobox2.get_current_broadcast_for_channel(Radiobox2.get_current_channel());
-  });
-  
-  setInterval(function() {
-      Radiobox2.time_lapsed();
-  }, 10000);
 };
 
 Radiobox2.get_current_channel = function() {
@@ -229,24 +221,39 @@ Radiobox2.get_current_songfile = function(track) {
   , 'json');  
 };
 
-Radiobox2.get_channels = function() {
-  $.get('http://radiobox2.omroep.nl/channel/search.json?q=', function(data) {
-    console.dir(data);
-    Radiobox2.data.full_channels = {};
-    Radiobox2.data.channels = {};
-    for (var i in data.results) {
-      Radiobox2.data.full_channels[data.results[i].id] = data.results[i];
-      Radiobox2.data.channels[data.results[i].id] = data.results[i].name;
-      if (data.results[i].type == "main") {
-        $('#radios select').append(
-        $('<option value="' + data.results[i].id + '">' + data.results[i].name + '</option>'));
-      }
+Radiobox2.channelsReceived = function() {
+  console.log('channels received !');
+  for (var i in Radiobox2Api.data.full_channels) {
+    if (Radiobox2Api.data.full_channels[i].type == "main") {
+      $('#radios select').append(
+      $('<option value="' + Radiobox2Api.data.full_channels[i].id + '">' + Radiobox2Api.data.full_channels[i].name + '</option>'));
     }
-  }, 'json');
-}
+  }
+  $('#radios select').val(Radiobox2Api.getChannelId());
+};
+
+Radiobox2.init = function() {
+  $(document).bind('Radiobox2.channelsReceived', function() {
+    Radiobox2.channelsReceived();
+  });
+  
+  Radiobox2Api.init();
+
+  /*
+  $('#radios select').change(function (what) {
+    console.log('something selected!' + $('#radiobox2-form-channel').val());
+    Radiobox2.update_radio_info();
+    Radiobox2.get_current_broadcast_for_channel(Radiobox2.get_current_channel());
+  });*/
+  
+  /*
+  setInterval(function() {
+      Radiobox2.time_lapsed();
+  }, 10000);
+  */
+};
 
 $(document).ready(function() {
   console.log('hoi');
   Radiobox2.init();
-  Radiobox2.get_channels();
 });
