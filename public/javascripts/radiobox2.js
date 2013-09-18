@@ -42,6 +42,7 @@ Radiobox2Api.getChannelId = function() {
 Radiobox2Api.setChannelId = function(channelId) {
   Radiobox2Api.data.currentChannelId = channelId;
   // some more stuff needs to happen.. clearing broadcast en track
+  Radiobox2Api.getCurrentBroadcast();
   $(document).trigger('Radiobox2.channelChanged', [channelId]);
 };
 
@@ -283,15 +284,21 @@ Radiobox2.channelsReceived = function() {
 
 Radiobox2.broadcastChanged = function() {
   var broadcast = Radiobox2Api.data.currentBroadcast;
-  $('#programme img').attr('src', broadcast.image.url);
-  $('#programme-info h2 .title').text(broadcast.name);
-  $('#programme-info #programme-description').html(broadcast.description);
-  $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
-  $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
 
-  //$('#presenter img').attr('src', broadcast.image.url);
-  $('#presenter h2').text(broadcast.presenter[0].full_name);
-  $('#presenter #presenter-description').html(broadcast.presenter[0].biography);  
+  Radiobox2.emptyBroadcast();
+  Radiobox2.emptyPresenter();
+
+  if (typeof(broadcast) !== 'undefined') {
+    $('#programme img').attr('src', broadcast.image.url);
+    $('#programme-info h2 .title').text(broadcast.name);
+    $('#programme-info #programme-description').html(broadcast.description);
+    $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
+    $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
+
+    //$('#presenter img').attr('src', broadcast.image.url);
+    $('#presenter h2').text(broadcast.presenter[0].full_name);
+    $('#presenter #presenter-description').html(broadcast.presenter[0].biography);  
+  }
 };
 
 Radiobox2.init = function() {
