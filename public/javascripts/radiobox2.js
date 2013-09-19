@@ -136,7 +136,7 @@ Radiobox2Api.getCurrentSongfile = function() {
         console.dir(songfile);
       }
       
-      Radiobox2Api.data.currentSonfile = songfile;
+      Radiobox2Api.data.currentSongfile = songfile;
       $(document).trigger('Radiobox2.songfileChanged', [songfile]);        
     }
   , 'json');   
@@ -257,14 +257,17 @@ Radiobox2.updateTimes = function() {
   // track stuff first
   var track = Radiobox2Api.data.currentTrack;
   
-  $('#track .start').text(moment(track.startdatetime).fromNow());
-  $('#track .end').text(moment(track.stopdatetime).fromNow());
-
+  if (typeof(track) !== 'undefined') {
+    $('#track .start').text(moment(track.startdatetime).fromNow());
+    $('#track .end').text(moment(track.stopdatetime).fromNow());
+  }
+  
   // now programme stuff
   var broadcast = Radiobox2Api.data.currentBroadcast;
-  $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
-  $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
- 
+  if (typeof(broadcast) !== 'undefined') {
+    $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
+    $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
+  } 
 };
 
 Radiobox2.songfileChanged = function() {
