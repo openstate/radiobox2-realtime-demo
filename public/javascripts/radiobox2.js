@@ -18,8 +18,12 @@ Radiobox2Api.init = function() {
   
   setInterval(function() {
       Radiobox2Api.getCurrentBroadcast();
+      Radiobox2Api.getCurrentItems();
   }, 60000);
   
+  setInterval(function() {
+    Radiobox2Api.getCurrentTrack();
+  }, 10000);
 };
 
 Radiobox2Api.getChannels = function() {
@@ -249,10 +253,21 @@ Radiobox2.emptyPresenter = function() {
   $('#presenter #presenter-description').html('');  
 };
 
+Radiobox2.emptyTrack = function() {
+  $('#track h1 .glyphicon').removeClass('glyphicon-play').addClass('glyphicon-stop');
+  $('#track h1 .artist').text('');
+  $('#track h1 .title').text('');
+  $('#track .start').text('');
+  $('#track .end').text('');
+  $('.track .player').html('');
+  //$('#track .player').attr('data-youtube-id', '');
+};
+
 Radiobox2.emptyPage = function() {
   Radiobox2.emptyChannelInfo();
   Radiobox2.emptyBroadcast();
   Radiobox2.emptyPresenter();
+  Radiobox2.emptyTrack();
 };
 
 Radiobox2.channelChanged = function() {
@@ -301,6 +316,34 @@ Radiobox2.broadcastChanged = function() {
   }
 };
 
+Radiobox2.trackChanged = function() {
+  var track = Radiobox2Api.data.currentTrack;
+  
+  Radiobox2.emptyTrack();
+
+  $('#track h1 .glyphicon').removeClass('glyphicon-stop').addClass('glyphicon-play');
+  $('#track h1 .artist').text(track.songfile.artist);
+  $('#track h1 .title').text(track.songfile.title);
+  $('#track .start').text(moment(track.startdatetime).fromNow());
+  $('#track .end').text(moment(track.stopdatetime).fromNow());
+  
+};
+
+
+Radiobox2.updateTimes = function() {
+  // track stuff first
+  var track = Radiobox2Api.data.currentTrack;
+  
+  $('#track .start').text(moment(track.startdatetime).fromNow());
+  $('#track .end').text(moment(track.stopdatetime).fromNow());
+
+  // now programme stuff
+  var broadcast = Radiobox2Api.data.currentBroadcast;
+  $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
+  $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
+ 
+};
+
 Radiobox2.init = function() {
   $(document).bind('Radiobox2.channelsReceived', function() {
     Radiobox2.channelsReceived();
@@ -308,6 +351,8 @@ Radiobox2.init = function() {
     Radiobox2.channelChanged();
   }).bind('Radiobox2.broadcastChanged', function() {
     Radiobox2.broadcastChanged();
+  }).bind('Radiobox2.trackChanged', function() {
+    Radiobox2.trackChanged();
   });
   
 
@@ -318,11 +363,9 @@ Radiobox2.init = function() {
 
   Radiobox2Api.init();
   
-  /*
   setInterval(function() {
-      Radiobox2.time_lapsed();
-  }, 10000);
-  */
+      Radiobox2.updateTimes();
+  }, 1000);
 };
 
 $(document).ready(function() {
