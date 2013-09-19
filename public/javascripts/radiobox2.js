@@ -8,6 +8,8 @@ var Radiobox2Api = window.Radiobox2Api || {
     _gettingCurrentItems: false,
     currentTrack: undefined,
     _gettingCurrentTrack: false,
+    currentSongfile: undefined,
+    _gettingCurrentSongfile: false,
     full_channels: {},
     channels: {}
   },
@@ -108,127 +110,42 @@ Radiobox2Api.getCurrentTrack = function() {
       var trackChanged = (typeof(track) != typeof(Radiobox2Api.data.currentTrack)) || (track.id != Radiobox2Api.data.currentTrack.id);
       if (trackChanged) {
         Radiobox2Api.data.currentTrack = track;
+        Radiobox2Api.getCurrentSongfile();
         $(document).trigger('Radiobox2.trackChanged', [track]);        
       }
     }
   , 'json');
 };
 
-/* Actual app */
-var Radiobox2 = window.Radiobox2 || {
-  data: {},
-};
+Radiobox2Api.getCurrentSongfile = function() {
+  if (Radiobox2Api.data._gettingCurrentSongfile) {
+    return;
+  }
+  Radiobox2Api.data._gettingCurrentSongfile = true;
 
-Radiobox2.get_current_channel = function() {
-  var radioId = parseInt($('#radiobox2-form-channel').val());
-  return radioId;
-};
-
-Radiobox2.time_lapsed = function() {
-    console.log('time lapsed !');
-    var channelId = Radiobox2.get_current_channel();
-    Radiobox2.get_current_broadcast_for_channel(channelId);
-    Radiobox2.get_current_item_for_channel(channelId);
-    Radiobox2.get_current_track_for_channel(channelId);
-}
-
-Radiobox2.update_radio_info = function() {
-  var radioId = parseInt($('#radiobox2-form-channel').val());
-  var radioInfo = Radiobox2.data.full_channels[radioId];
-  $('#radio-info img').attr('src', radioInfo.image.url);
-  $('#radio-info h1').text(radioInfo.name);
-  $('#radio-info h3').text(radioInfo.epg_shortdescription);
-  $('#radio-info p.description').text(radioInfo.description);
-  $('#radio-info p.tags').text(radioInfo.tags);
-};
-
-Radiobox2.get_current_broadcast_for_channel = function(channelId) {
-  $.get(
-    "http://radiobox2.omroep.nl/broadcast/search.json?q=channel.id:'" + channelId + "'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
-    function(data) {
-      console.dir(data);
-      var broadcast = data.results[0];
-      $('#programme img').attr('src', broadcast.image.url);
-      $('#programme-info h2 .title').text(broadcast.name);
-      $('#programme-info #programme-description').html(broadcast.description);
-      $('#programme-info #programme-start').text(moment(broadcast.startdatetime).fromNow());
-      $('#programme-info #programme-end').text(moment(broadcast.stopdatetime).fromNow());
-
-      //$('#presenter img').attr('src', broadcast.image.url);
-      $('#presenter h2').text(broadcast.presenter[0].full_name);
-      $('#presenter #presenter-description').html(broadcast.presenter[0].biography);
-
-    }
-  , 'json');
-};
-
-Radiobox2.get_current_item_for_channel = function(channelId) {
-  $.get(
-    "http://radiobox2.omroep.nl/item/search.json?q=channel.id:'" + channelId + "'%20AND%20startdatetime%3CNOW%20AND%20stopdatetime%3ENOW'&order=startdatetime:desc&max-results=5",
-    function(data) {
-      console.log('item:');
-      console.dir(data);
-      var item = data.results[0];
-    }
-  , 'json');
-};
-
-Radiobox2.get_current_track_for_channel = function(channelId) {
-  $.get(
-    '/channels/' + channelId + '/current_track',
-    function(data) {
-      console.log('track:');
-      console.dir(data);
-      if (data.results.length > 0) {
-        var item = data.results[0];
-        $('#track h1 .glyphicon').removeClass('glyphicon-stop').addClass('glyphicon-play');
-        $('#track h1 .artist').text(item.songfile.artist);
-        $('#track h1 .title').text(item.songfile.title);
-        $('#track .start').text(moment(item.startdatetime).fromNow());
-        $('#track .end').text(moment(item.stopdatetime).fromNow());
-        Radiobox2.get_current_songfile(item);
-      } else {
-        $('#track h1 .glyphicon').removeClass('glyphicon-play').addClass('glyphicon-stop');
-        $('#track h1 .artist').text('');
-        $('#track h1 .title').text('');
-        $('#track .start').text('');
-        $('#track .end').text('');
-        $('.track .player').html('');
-        $('#track .player').attr('data-youtube-id', '');
-      }
-    }
-  , 'json');
-};
-
-Radiobox2.get_current_songfile = function(track) {
-  console.log('track for songfile');
-  console.dir(track);
+  var track = Radiobox2Api.data.currentTrack;
   $.get(
     "http://radiobox2.omroep.nl/songversion/search.json?q=songfile.id:'" + track.songfile.id + "'",
     function (data) {
+      Radiobox2Api.data._gettingCurrentSongfile = false;
+
+      var songfile = undefined;
       if (data.results.length > 0) {
         console.log('got songfile!');
-        var songfile = data.results[0];
+        songfile = data.results[0];
         console.dir(songfile);
-        if ((songfile.youtube_id != '') && ($('#track .player').attr('data-youtube-id') == '')) {
-          $.get('/youtube/embed/' + songfile.youtube_id,
-            function(data){
-              console.log('got youtube data!');
-              console.dir(data);
-              $('#track .player').attr('data-youtube-id', songfile.youtube_id);
-              $('#track .player').html(data.html);
-            }
-          , 'json');
-        } else if ((typeof(songfile.audiofile) !== 'undefined') && (songfile.audiofile.url != '') ){
-          // what now?
-        }
-      } else {
-        console.log('got no songfile!');
-        $('.track .player').html('');
-        $('#track .player').attr('data-youtube-id', '');
       }
+      
+      Radiobox2Api.data.currentSonfile = songfile;
+      $(document).trigger('Radiobox2.songfileChanged', [songfile]);        
     }
-  , 'json');  
+  , 'json');   
+};
+
+/* Actual app */
+
+var Radiobox2 = window.Radiobox2 || {
+  data: {},
 };
 
 Radiobox2.emptyChannelInfo = function() {
@@ -263,11 +180,16 @@ Radiobox2.emptyTrack = function() {
   //$('#track .player').attr('data-youtube-id', '');
 };
 
+Radiobox2.emptySongfile = function() {
+  $('#track .player').html('');  
+};
+
 Radiobox2.emptyPage = function() {
   Radiobox2.emptyChannelInfo();
   Radiobox2.emptyBroadcast();
   Radiobox2.emptyPresenter();
   Radiobox2.emptyTrack();
+  Radiobox2.emptySongfile();
 };
 
 Radiobox2.channelChanged = function() {
@@ -320,6 +242,7 @@ Radiobox2.trackChanged = function() {
   var track = Radiobox2Api.data.currentTrack;
   
   Radiobox2.emptyTrack();
+  Radiobox2.emptySongfile();
 
   $('#track h1 .glyphicon').removeClass('glyphicon-stop').addClass('glyphicon-play');
   $('#track h1 .artist').text(track.songfile.artist);
@@ -344,6 +267,27 @@ Radiobox2.updateTimes = function() {
  
 };
 
+Radiobox2.songfileChanged = function() {
+  var songfile = Radiobox2Api.data.currentSongfile;
+  
+  if (typeof(songfile) === 'undefined') {
+    return;
+  }
+
+  console.dir(songfile);
+  if (songfile.youtube_id != '') {
+    $.get('/youtube/embed/' + songfile.youtube_id,
+      function(data){
+        console.log('got youtube data!');
+        console.dir(data);
+        $('#track .player').html(data.html);
+      }
+    , 'json');
+  } else if ((typeof(songfile.audiofile) !== 'undefined') && (songfile.audiofile.url != '') ){
+    // what now?
+  }
+};
+
 Radiobox2.init = function() {
   $(document).bind('Radiobox2.channelsReceived', function() {
     Radiobox2.channelsReceived();
@@ -353,9 +297,10 @@ Radiobox2.init = function() {
     Radiobox2.broadcastChanged();
   }).bind('Radiobox2.trackChanged', function() {
     Radiobox2.trackChanged();
+  }).bind('Radiobox2.songfileChanged', function() {
+    Radiobox2.songfileChanged();
   });
   
-
   $('#radios select').change(function (what) {
     var channelId = parseInt($('#radiobox2-form-channel').val());
     Radiobox2Api.setChannelId(channelId);
